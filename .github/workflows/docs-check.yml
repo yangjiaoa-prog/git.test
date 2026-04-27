@@ -1,6 +1,5 @@
-name: 文档质量检查（Markdown+内容+链接）
+name: 文档质量检查
 
-# 触发时机：推送到 main 分支，或向 main 发 PR
 on:
   push:
     branches:
@@ -9,45 +8,34 @@ on:
     branches:
       - main
 
-# 任务开始
 jobs:
-  # 任务1：检查 Markdown 格式
+  # 1. Markdown 格式检查（标题空行、语法）
   markdownlint:
     runs-on: ubuntu-latest
     steps:
-      - name: 拉取代码
-        uses: actions/checkout@v4
-
-      - name: 安装 Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: 安装格式检查工具
+      - uses: actions/checkout@v4
+      - name: 安装 markdownlint
         run: npm install -g markdownlint-cli
+      - name: 检查格式
+        run: markdownlint '**/*.md' --ignore-node-modules
 
-      - name: 运行格式检查
-        run: markdownlint '**/*.md'
-
-  # 任务2：检查内容风格（术语、语法、语气）
-  vale:
+  # 2. 错别字检查（最强！soluton 必查出来）
+  spellcheck:
     runs-on: ubuntu-latest
     steps:
-      - name: 拉取代码
-        uses: actions/checkout@v4
-
-      - name: 运行内容检查
-        uses: errata-ai/vale-action@v2
+      - uses: actions/checkout@v4
+      - name: 检查英文拼写错误
+        uses: codespell-project/actions-codespell@v2
         with:
-          files: '**/*.md'
+          path: "."
+          skip: .git,*.png,*.jpg,*.svg
+          ignore_words_list: aka,repo,github,actions,yml,md
 
-  # 任务3：检查死链（链接是否有效）
-  link-check:
+  # 3. 死链检查（链接是否有效）
+  linkcheck:
     runs-on: ubuntu-latest
     steps:
-      - name: 拉取代码
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
       - name: 检查所有链接
         uses: lycheeverse/lychee-action@v1
         with:
